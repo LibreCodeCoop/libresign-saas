@@ -330,6 +330,60 @@ class ApiService {
 
     return response.json();
   }
+
+  // Payment Gateways
+  async getPaymentGateways() {
+    const response = await fetch(`${API_URL}/api/admin/payment-gateways`, {
+      headers: this.getHeaders(true),
+    });
+
+    if (!response.ok) {
+      throw new Error('Erro ao buscar gateways de pagamento');
+    }
+
+    return response.json();
+  }
+
+  async getPaymentGateway(id: number) {
+    const response = await fetch(`${API_URL}/api/admin/payment-gateways/${id}`, {
+      headers: this.getHeaders(true),
+    });
+
+    if (!response.ok) {
+      throw new Error('Erro ao buscar gateway');
+    }
+
+    return response.json();
+  }
+
+  async updatePaymentGateway(id: number, data: any) {
+    const response = await fetch(`${API_URL}/api/admin/payment-gateways/${id}`, {
+      method: 'PUT',
+      headers: this.getHeaders(true),
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Erro ao atualizar gateway');
+    }
+
+    return response.json();
+  }
+
+  async togglePaymentGateway(id: number) {
+    const response = await fetch(`${API_URL}/api/admin/payment-gateways/${id}/toggle`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Erro ao alternar status');
+    }
+
+    return response.json();
+  }
 }
 
 export const api = new ApiService();

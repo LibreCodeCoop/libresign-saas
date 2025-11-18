@@ -47,6 +47,9 @@ docker exec saas-backend php artisan migrate --seed
 Acesse:
 - Frontend: http://localhost:3000
 - API: http://localhost:8000
+- pgAdmin: http://localhost:5050
+  - Email: admin@libresign.coop
+  - Senha: admin
 
 ## Como testar o SaaS
 
@@ -74,6 +77,25 @@ App\Models\User::where('email', 'seu@email')->update(['is_admin' => true]);
 Depois, acesse o painel em http://localhost:3000/admin
 - Dashboard com métricas (usuários por plano/instância, storage, etc.)
 - Lista de instâncias em /admin/instances
+
+## Administração do Banco de Dados
+
+Acesse o pgAdmin em http://localhost:5050
+
+1) Faça login com:
+   - Email: `admin@libresign.coop`
+   - Senha: `admin`
+
+2) Adicionar servidor PostgreSQL:
+   - Clique em "Add New Server"
+   - **General** → Name: `SaaS LibreSign`
+   - **Connection**:
+     - Host: `postgres` (nome do container)
+     - Port: `5432`
+     - Database: `saas_libresign`
+     - Username: `saas_user`
+     - Password: `saas_pass`
+   - Clique em "Save"
 
 ## Desenvolvimento
 

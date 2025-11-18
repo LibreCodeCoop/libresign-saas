@@ -66,8 +66,25 @@ services:
     networks:
       - saas-network
 
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: saas-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@libresign.coop}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - saas-network
+
 volumes:
   postgres_data:
+  pgadmin_data:
 
 networks:
   saas-network:

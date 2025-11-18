@@ -1,0 +1,21 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Socket Security Scan
+echo "🔍 Running Socket Security scan..."
+
+# Verifica se package.json foi modificado
+if git diff --cached --name-only | grep -q "frontend/package.json"; then
+  echo "📦 Scanning frontend dependencies..."
+  cd frontend && npx @socketdev/cli npm audit || exit 1
+  cd ..
+fi
+
+# Verifica se composer.json foi modificado
+if git diff --cached --name-only | grep -q "backend/composer.json"; then
+  echo "📦 Scanning backend dependencies..."
+  cd backend && npx @socketdev/cli composer audit || exit 1
+  cd ..
+fi
+
+echo "✅ Socket Security scan passed!"

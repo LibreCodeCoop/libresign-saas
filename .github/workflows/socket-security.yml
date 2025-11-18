@@ -1,0 +1,32 @@
+name: Socket Security
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  socket-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Socket Security
+        uses: socketdev/socket-security-action@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          
+      # Frontend (Node.js)
+      - name: Socket Scan Frontend
+        uses: socketdev/socket-npm-action@v1
+        with:
+          api-token: ${{ secrets.SOCKET_API_TOKEN }}
+          path: frontend/package.json
+          
+      # Backend (Composer)
+      - name: Socket Scan Backend
+        uses: socketdev/socket-composer-action@v1
+        with:
+          api-token: ${{ secrets.SOCKET_API_TOKEN }}
+          path: backend/composer.json

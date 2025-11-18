@@ -1,0 +1,37 @@
+version: 2
+
+# Configuração para frontend
+project:
+  name: "LibreSign SaaS"
+  language: javascript
+  
+# Regras de segurança
+rules:
+  # Bloquear pacotes com issues críticos
+  block:
+    - critical: true
+    - high: true
+  
+  # Alertar sobre issues médios
+  warn:
+    - medium: true
+    
+  # Ignorar issues baixos (informacional)
+  ignore:
+    - low: true
+
+# Diretórios a serem escaneados
+paths:
+  - frontend/package.json
+  - frontend/package-lock.json
+  - backend/composer.json
+  - backend/composer.lock
+
+# Ignorar dependências específicas (se necessário)
+# ignore:
+#   - package-name@version
+
+# Notificações
+notifications:
+  slack: false
+  email: true

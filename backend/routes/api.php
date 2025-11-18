@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Admin\NextcloudGroupController;
 use App\Http\Controllers\Api\Admin\UserMetricsController;
 use App\Http\Controllers\Api\Admin\PaymentMethodController;
 use App\Http\Controllers\Api\Admin\PaymentMethodTestController;
+use App\Http\Controllers\Api\PaymentGatewayController;
 use Illuminate\Support\Facades\Route;
 
 // Rotas públicas
@@ -63,9 +64,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('instances/{id}/metrics', [AdminController::class, 'metrics']);
         Route::get('instances/{id}/logs', [AdminController::class, 'logs']);
         
-        // Métodos de pagamento
+        // Métodos de pagamento (legado)
         Route::apiResource('payment-methods', PaymentMethodController::class);
         Route::post('payment-methods/{id}/test', [PaymentMethodTestController::class, 'test']);
+        
+        // Gateways de pagamento
+        Route::get('payment-gateways', [PaymentGatewayController::class, 'index']);
+        Route::get('payment-gateways/active', [PaymentGatewayController::class, 'active']);
+        Route::post('payment-gateways', [PaymentGatewayController::class, 'store']);
+        Route::get('payment-gateways/{id}', [PaymentGatewayController::class, 'show']);
+        Route::put('payment-gateways/{id}', [PaymentGatewayController::class, 'update']);
+        Route::post('payment-gateways/{id}/toggle', [PaymentGatewayController::class, 'toggle']);
+        Route::delete('payment-gateways/{id}', [PaymentGatewayController::class, 'destroy']);
+        Route::post('payment-gateways/reorder', [PaymentGatewayController::class, 'reorder']);
         
         // Métricas de usuários
         Route::get('users/metrics', [UserMetricsController::class, 'index']);

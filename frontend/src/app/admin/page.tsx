@@ -103,24 +103,30 @@ export default function AdminDashboard() {
         )}
 
         {/* Actions */}
-        <div className="flex gap-4 mb-8">
+        <div className="flex flex-wrap gap-4 mb-8">
           <button
             onClick={() => router.push('/admin/instances')}
-            className="px-4 py-2 bg-libresign-blue text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-libresign-blue text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
           >
-            Ver Todas as Instâncias
+            <span>🖥️</span> Ver Todas as Instâncias
           </button>
           <button
             onClick={() => router.push('/admin/instances/new')}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
           >
-            + Nova Instância
+            <span>➕</span> Nova Instância
+          </button>
+          <button
+            onClick={() => router.push('/admin/payment-gateways')}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+          >
+            <span>💳</span> Configurar Pagamentos
           </button>
           <button
             onClick={loadDashboard}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2"
           >
-            🔄 Atualizar
+            <span>🔄</span> Atualizar
           </button>
         </div>
 

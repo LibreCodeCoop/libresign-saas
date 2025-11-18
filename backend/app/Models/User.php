@@ -26,6 +26,7 @@ class User extends Authenticatable
         'company',
         'role',
         'is_admin',
+        'plan_id',
         'plan_type',
         'trial_ends_at',
         'subscription_ends_at',
@@ -101,6 +102,11 @@ class User extends Authenticatable
     public function nextcloudInstance()
     {
         return $this->belongsTo(NextcloudInstance::class, 'nextcloud_instance_id');
+    }
+
+    public function plan()
+    {
+        return $this->belongsTo(Plan::class);
     }
 
     /**

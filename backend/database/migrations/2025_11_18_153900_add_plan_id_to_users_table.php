@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('platform_url')->nullable()->after('nextcloud_instance_id');
+            $table->foreignId('plan_id')->nullable()->after('password')->constrained()->onDelete('set null');
         });
     }
 
@@ -22,7 +22,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('platform_url');
+            $table->dropForeign(['plan_id']);
+            $table->dropColumn('plan_id');
         });
     }
 };

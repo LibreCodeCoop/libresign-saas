@@ -27,6 +27,14 @@ class NextcloudService
     }
 
     /**
+     * Verifica se a instância usa Docker direto
+     */
+    protected function usesDocker(): bool
+    {
+        return $this->instance->management_method === 'docker';
+    }
+
+    /**
      * Executa requisição para a API do Nextcloud
      */
     protected function apiRequest(string $method, string $endpoint, array $data = []): array
@@ -80,6 +88,10 @@ class NextcloudService
      */
     protected function executeOcc(string $command, array $args = []): string
     {
+        if ($this->usesDocker()) {
+            return $this->executeOccDirect($command, $args);
+        }
+        
         $ssh = $this->connect();
         
         $argString = implode(' ', array_map('escapeshellarg', $args));
@@ -105,6 +117,34 @@ class NextcloudService
     }
 
     /**
+     * Executa comando OCC diretamente via docker exec (sem SSH)
+     */
+    protected function executeOccDirect(string $command, array $args = []): string
+    {
+        $argString = implode(' ', array_map('escapeshellarg', $args));
+        $dockerCommand = sprintf(
+            'docker exec -u 33 %s php occ %s %s',
+            escapeshellarg($this->instance->docker_container_name),
+            $command,
+            $argString
+        );
+
+        exec($dockerCommand . ' 2>&1', $output, $returnCode);
+        $outputStr = implode("\n", $output);
+        
+        if ($returnCode !== 0) {
+            Log::error('Erro ao executar comando occ diretamente', [
+                'command' => $dockerCommand,
+                'output' => $outputStr,
+                'instance' => $this->instance->name
+            ]);
+            throw new \Exception("Erro ao executar comando: {$outputStr}");
+        }
+
+        return trim($outputStr);
+    }
+
+    /**
      * Cria um usuário no Nextcloud
      */
     public function createUser(string $userId, string $displayName, string $email, ?string $password = null): array
@@ -115,6 +155,8 @@ class NextcloudService
 
         if ($this->usesSSH()) {
             return $this->createUserViaSSH($userId, $displayName, $email, $password);
+        } elseif ($this->usesDocker()) {
+            return $this->createUserViaDocker($userId, $displayName, $email, $password);
         } else {
             return $this->createUserViaAPI($userId, $displayName, $email, $password);
         }
@@ -152,6 +194,36 @@ class NextcloudService
     }
 
     /**
+     * Cria usuário via Docker direto
+     */
+    protected function createUserViaDocker(string $userId, string $displayName, string $email, string $password): array
+    {
+        $dockerCommand = sprintf(
+            'docker exec -e OC_PASS=%s -u 33 %s php occ user:add --password-from-env --display-name=%s --email=%s %s 2>&1',
+            escapeshellarg($password),
+            escapeshellarg($this->instance->docker_container_name),
+            escapeshellarg($displayName),
+            escapeshellarg($email),
+            escapeshellarg($userId)
+        );
+
+        exec($dockerCommand, $output, $returnCode);
+        $outputStr = implode("\n", $output);
+
+        if ($returnCode !== 0) {
+            throw new \Exception("Erro ao criar usuário: {$outputStr}");
+        }
+
+        return [
+            'user_id' => $userId,
+            'password' => $password,
+            'display_name' => $displayName,
+            'email' => $email,
+            'output' => trim($outputStr)
+        ];
+    }
+
+    /**
      * Cria usuário via API
      */
     protected function createUserViaAPI(string $userId, string $displayName, string $email, string $password): array
@@ -177,7 +249,7 @@ class NextcloudService
      */
     public function deleteUser(string $userId): string
     {
-        if ($this->usesSSH()) {
+        if ($this->usesSSH() || $this->usesDocker()) {
             return $this->executeOcc('user:delete', [$userId]);
         } else {
             $this->apiRequest('delete', "cloud/users/{$userId}");
@@ -190,7 +262,7 @@ class NextcloudService
      */
     public function createGroup(string $groupId): string
     {
-        if ($this->usesSSH()) {
+        if ($this->usesSSH() || $this->usesDocker()) {
             return $this->executeOcc('group:add', [$groupId]);
         } else {
             $this->apiRequest('post', 'cloud/groups', ['groupid' => $groupId]);

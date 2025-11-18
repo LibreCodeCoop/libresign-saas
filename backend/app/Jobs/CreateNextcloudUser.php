@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\User;
 use App\Models\NextcloudInstance;
+use App\Models\Plan;
 use App\Services\NextcloudService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -52,36 +53,28 @@ class CreateNextcloudUser implements ShouldQueue
             $nextcloudUserId = $this->generateNextcloudUserId($this->user->email);
             $nc->createUser($nextcloudUserId, $this->user->name, $this->user->email, $password);
 
-            // Define quota baseado no plano
-            $quota = $this->getQuotaForPlan($this->user->plan_type);
+            // Define quota baseado no plano do usuário
+            $quota = $this->getQuotaForUser($this->user);
             if ($quota) {
                 $nc->setUserQuota($nextcloudUserId, $quota);
             }
 
-            // Cria grupo com nome da empresa do usuário
-            $companyGroupId = $this->generateGroupId($this->user->company);
+            // Cria grupo pessoal do usuário (baseado no email)
+            $personalGroupId = $this->generatePersonalGroupId($this->user->email);
             try {
-                $nc->createGroup($companyGroupId);
-                Log::info("Grupo da empresa criado: {$companyGroupId}");
+                $nc->createGroup($personalGroupId);
+                Log::info("Grupo pessoal criado: {$personalGroupId}");
             } catch (\Exception $e) {
                 // Grupo pode já existir, não é erro crítico
-                Log::info("Grupo já existe ou erro ao criar: {$e->getMessage()}");
+                Log::warning("Erro ao criar grupo pessoal: {$e->getMessage()}");
             }
 
-            // Adiciona usuário ao grupo da empresa
+            // Adiciona usuário ao seu grupo pessoal
             try {
-                $nc->addUserToGroup($nextcloudUserId, $companyGroupId);
-                Log::info("Usuário adicionado ao grupo da empresa: {$companyGroupId}");
+                $nc->addUserToGroup($nextcloudUserId, $personalGroupId);
+                Log::info("Usuário adicionado ao grupo pessoal: {$personalGroupId}");
             } catch (\Exception $e) {
-                Log::warning("Não foi possível adicionar ao grupo da empresa: {$e->getMessage()}");
-            }
-
-            // Adiciona ao grupo padrão libresign_users (opcional)
-            try {
-                $nc->addUserToGroup($nextcloudUserId, 'libresign_users');
-            } catch (\Exception $e) {
-                // Grupo pode não existir, não é crítico
-                Log::warning("Não foi possível adicionar ao grupo padrão: {$e->getMessage()}");
+                Log::warning("Não foi possível adicionar ao grupo pessoal: {$e->getMessage()}");
             }
 
             // Envia email de boas-vindas
@@ -151,29 +144,27 @@ class CreateNextcloudUser implements ShouldQueue
     }
 
     /**
-     * Gera ID de grupo baseado no nome da empresa
+     * Gera ID de grupo pessoal baseado no email do usuário
      */
-    private function generateGroupId(string $companyName): string
+    private function generatePersonalGroupId(string $email): string
     {
-        // Remove caracteres especiais e converte para formato válido
-        $groupId = Str::slug($companyName, '_');
-        
-        // Limita tamanho e garante formato válido
-        $groupId = substr($groupId, 0, 64);
-        
-        // Remove underscores no início/fim
-        $groupId = trim($groupId, '_');
-        
-        return $groupId ?: 'company_' . substr(md5($companyName), 0, 8);
+        // Usa o email completo como nome do grupo
+        return $email;
     }
 
     /**
-     * Retorna quota baseado no plano
+     * Retorna quota baseado no plano do usuário
      */
-    private function getQuotaForPlan(string $planType): ?string
+    private function getQuotaForUser(User $user): ?string
     {
-        $plans = config('plans');
-        return $plans[$planType]['storage'] ?? '5GB';
+        // Se o usuário tem um plano associado, usa o storage_limit do plano
+        if ($user->plan_id && $user->plan) {
+            $storageGB = $user->plan->storage_limit;
+            return $storageGB ? "{$storageGB}GB" : null;
+        }
+        
+        // Fallback para quota padrão
+        return '5GB';
     }
 
     /**

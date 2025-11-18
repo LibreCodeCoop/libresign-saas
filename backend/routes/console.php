@@ -5,6 +5,10 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use App\Models\LoginToken;
 
+// Monitorar instâncias Nextcloud
+// Executa a cada 5 minutos
+Schedule::command('instances:monitor')->everyFiveMinutes();
+
 // Agendar sincronização de métricas dos usuários
 // Executa diariamente à meia-noite
 Schedule::command('users:sync-metrics')->daily();

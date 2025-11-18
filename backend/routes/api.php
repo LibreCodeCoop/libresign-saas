@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PlanController;
 use App\Http\Controllers\Api\SSOController;
+use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\Admin\NextcloudInstanceController;
 use App\Http\Controllers\Api\Admin\NextcloudUserController;
 use App\Http\Controllers\Api\Admin\NextcloudGroupController;
@@ -39,6 +40,29 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Rotas administrativas
     Route::middleware('admin')->prefix('admin')->group(function () {
+        // Dashboard e estatísticas
+        Route::get('dashboard', [AdminController::class, 'dashboard']);
+        Route::get('stats', [AdminController::class, 'stats']);
+        
+        // Gerenciamento de instâncias - CRUD principal
+        Route::get('instances', [AdminController::class, 'index']);
+        Route::post('instances', [AdminController::class, 'store']);
+        Route::get('instances/{id}', [AdminController::class, 'show']);
+        Route::put('instances/{id}', [AdminController::class, 'update']);
+        Route::delete('instances/{id}', [AdminController::class, 'destroy']);
+        
+        // Ações de instâncias
+        Route::post('instances/batch-action', [AdminController::class, 'batchAction']);
+        Route::post('instances/{id}/action', [AdminController::class, 'action']);
+        Route::post('instances/{id}/collect-metrics', [AdminController::class, 'collectMetrics']);
+        Route::post('instances/{id}/health-check', [AdminController::class, 'healthCheck']);
+        Route::post('instances/{id}/test-connection', [NextcloudInstanceController::class, 'testConnection']);
+        Route::post('instances/{id}/fetch-version', [NextcloudInstanceController::class, 'fetchVersion']);
+        
+        // Métricas e logs
+        Route::get('instances/{id}/metrics', [AdminController::class, 'metrics']);
+        Route::get('instances/{id}/logs', [AdminController::class, 'logs']);
+        
         // Métodos de pagamento
         Route::apiResource('payment-methods', PaymentMethodController::class);
         Route::post('payment-methods/{id}/test', [PaymentMethodTestController::class, 'test']);
@@ -47,12 +71,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('users/metrics', [UserMetricsController::class, 'index']);
         Route::post('users/{id}/sync-metrics', [UserMetricsController::class, 'sync']);
         Route::get('instances/{instanceId}/users/stats', [UserMetricsController::class, 'byInstance']);
-        
-        // Gerenciamento de instâncias Nextcloud
-        Route::apiResource('instances', NextcloudInstanceController::class);
-        Route::post('instances/{id}/test-connection', [NextcloudInstanceController::class, 'testConnection']);
-        Route::post('instances/{id}/fetch-version', [NextcloudInstanceController::class, 'fetchVersion']);
-        Route::post('instances/{id}/health-check', [NextcloudInstanceController::class, 'healthCheck']);
         
         // Gerenciamento de usuários Nextcloud
         Route::prefix('instances/{instanceId}/users')->group(function () {

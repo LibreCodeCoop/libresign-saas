@@ -24,6 +24,24 @@ class NextcloudInstance extends Model
         'max_users',
         'current_users',
         'notes',
+        // Metrics fields
+        'storage_used',
+        'storage_allocated',
+        'cpu_usage',
+        'memory_usage',
+        'memory_allocated',
+        'disk_io',
+        'network_throughput',
+        'active_users',
+        'response_times',
+        'storage_growth',
+        'user_activity',
+        'domain',
+        'plan',
+        'last_backup',
+        'alerts',
+        'backup_config',
+        'autoscaling_config',
     ];
 
     protected $casts = [
@@ -32,6 +50,21 @@ class NextcloudInstance extends Model
         'current_users' => 'integer',
         'health_check_results' => 'array',
         'last_health_check' => 'datetime',
+        'storage_used' => 'integer',
+        'storage_allocated' => 'integer',
+        'cpu_usage' => 'float',
+        'memory_usage' => 'float',
+        'memory_allocated' => 'integer',
+        'disk_io' => 'float',
+        'network_throughput' => 'float',
+        'active_users' => 'integer',
+        'response_times' => 'array',
+        'storage_growth' => 'array',
+        'user_activity' => 'array',
+        'last_backup' => 'datetime',
+        'alerts' => 'array',
+        'backup_config' => 'array',
+        'autoscaling_config' => 'array',
     ];
 
     protected $hidden = [

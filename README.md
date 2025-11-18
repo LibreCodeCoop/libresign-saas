@@ -1,23 +1,22 @@
 # SaaS LibreSign
 
-Sistema SaaS para gerenciamento de instâncias Nextcloud com integração de pagamentos.
+Plataforma SaaS para gerenciar usuários e instâncias Nextcloud com planos e provisionamento automático.
 
 ## Tecnologias
 
-- **Frontend**: Next.js 16 + TypeScript + Tailwind CSS
-- **Backend**: Laravel 12 + PHP 8.2
-- **Banco de Dados**: PostgreSQL 16
-- **Cache/Filas**: Redis 7
-- **Containerização**: Docker + Docker Compose
+- Frontend: Next.js + React + TypeScript + Tailwind CSS
+- Backend: Laravel (PHP 8.2)
+- Banco de Dados: PostgreSQL 16
+- Cache/Filas: Redis 7
+- Docker: desenvolvimento e produção containerizados
 
 ## Funcionalidades
 
-- ✅ Landing page com planos
-- ✅ Autenticação de usuários
-- ✅ Autenticação de administradores
-- ✅ Checkout e integração com gateway de pagamento
-- ✅ Provisionamento automático de contas Nextcloud
-- ✅ Gerenciamento de instâncias Nextcloud (admin)
+- Cadastro/login de usuários
+- Planos com limites e quotas
+- Criação automática de usuário e grupo no Nextcloud (job em background)
+- Dashboard do usuário
+- Painel administrativo com métricas, instâncias e usuários
 
 ## Estrutura do Projeto
 
@@ -29,111 +28,95 @@ Sistema SaaS para gerenciamento de instâncias Nextcloud com integração de pag
 └── README.md
 ```
 
-## Setup
+## Início rápido
 
-### Pré-requisitos
+Pré-requisitos: Docker e Docker Compose
 
-- Docker
-- Docker Compose
-- Node.js 22+
-- PHP 8.2+
-- Composer
-
-### Instalação
-
-1. Clone o repositório e instale as dependências:
+1) Suba os serviços
 
 ```bash
-# Backend
-cd backend
-cp .env.example .env
-composer install
-php artisan key:generate
-
-# Frontend
-cd ../frontend
-npm install
+docker compose up -d --build
 ```
 
-2. Configure o `.env` do Laravel com PostgreSQL:
-
-```env
-DB_CONNECTION=pgsql
-DB_HOST=postgres
-DB_PORT=5432
-DB_DATABASE=saas_libresign
-DB_USERNAME=saas_user
-DB_PASSWORD=saas_pass
-
-REDIS_HOST=redis
-REDIS_PORT=6379
-```
-
-3. Suba os containers:
+2) Rode as migrations (e seeds)
 
 ```bash
-docker-compose up -d
+docker exec saas-backend php artisan migrate --seed
 ```
 
-4. Execute as migrations:
+Acesse:
+- Frontend: http://localhost:3000
+- API: http://localhost:8000
+
+## Como testar o SaaS
+
+1) Criar um usuário
+- Acesse http://localhost:3000
+- Clique em Entrar > Cadastrar
+- Preencha nome, email, empresa, senha e crie a conta
+
+Resultado esperado:
+- Usuário criado com plano Trial automaticamente
+- Um job é enfileirado para criar o usuário no Nextcloud e o grupo pessoal
+
+2) Ver o dashboard do usuário
+- Após login, acesse /dashboard
+- Você verá informações do plano e métricas básicas
+
+3) Promover a admin (opcional)
 
 ```bash
-docker exec -it saas-backend php artisan migrate
+docker exec saas-backend php artisan tinker --execute="
+App\Models\User::where('email', 'seu@email')->update(['is_admin' => true]);
+"
 ```
 
-## Acesso
-
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **PostgreSQL**: localhost:5432
-- **Redis**: localhost:6379
+Depois, acesse o painel em http://localhost:3000/admin
+- Dashboard com métricas (usuários por plano/instância, storage, etc.)
+- Lista de instâncias em /admin/instances
 
 ## Desenvolvimento
 
 ### Backend (Laravel)
 
 ```bash
-# Rodar migrations
-docker exec -it saas-backend php artisan migrate
+# Migrations/Seeds
+docker exec saas-backend php artisan migrate --seed
 
-# Criar migration
-docker exec -it saas-backend php artisan make:migration create_plans_table
+# Limpar cache
+docker exec saas-backend php artisan cache:clear && \
+  docker exec saas-backend php artisan config:clear
 
-# Criar controller
-docker exec -it saas-backend php artisan make:controller PlanController
+# Console interativo
+docker exec saas-backend php artisan tinker
+```
 
-# Rodar testes
-docker exec -it saas-backend php artisan test
+### Filas (jobs)
+
+```bash
+# Processar um job
+docker exec saas-backend php artisan queue:work --once
+
+# Worker contínuo (dev)
+docker exec saas-backend php artisan queue:work --verbose
 ```
 
 ### Frontend (Next.js)
 
 ```bash
-# Desenvolvimento local (sem Docker)
-cd frontend
-npm run dev
+# Logs do frontend
+docker logs -f saas-frontend
 
-# Build de produção
-npm run build
-npm start
+# Rebuild apenas do frontend
+docker compose up -d --build frontend
 ```
 
-## ✅ Implementado
+## Notas
 
-- ✅ Landing page com cores e design do LibreSign
-- ✅ Página de login/registro completa
-- ✅ Validação de senha com requisitos
-- ✅ Sistema de mensagens (Toast)
-- ✅ Laravel Sanctum configurado
-- ✅ API de autenticação (login/register/logout)
-- ✅ Migrations com campos extras (phone, company, role)
+- A criação de usuário no Nextcloud via job requer uma instância configurada em Admin > Instâncias
+- Métodos suportados para gerenciar Nextcloud: SSH, API ou Docker
+- Em dev, você pode testar a fila rodando um job único (`queue:work --once`)
 
-## Próximos Passos
+## Licença
 
-1. Executar migrations e configurar PostgreSQL
-2. Criar models (Admin, Plan, Subscription, NextcloudInstance)
-3. Implementar controllers de planos e pagamentos
-4. Configurar integração com Stripe/Paddle
-5. Implementar filas Redis para provisionamento de contas Nextcloud
-6. Criar dashboard de usuário e admin
-7. Implementar gestão de instâncias Nextcloud
+MIT

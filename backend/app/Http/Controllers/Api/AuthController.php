@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Plan;
 use App\Jobs\CreateNextcloudUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -26,6 +27,15 @@ class AuthController extends Controller
             'role' => ['required', 'string', 'max:255'],
         ]);
 
+        // Buscar plano Trial
+        $trialPlan = Plan::where('slug', 'trial')->first();
+        
+        if (!$trialPlan) {
+            return response()->json([
+                'message' => 'Plano Trial não configurado. Contate o administrador.',
+            ], 500);
+        }
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -33,9 +43,10 @@ class AuthController extends Controller
             'phone' => $request->phone,
             'company' => $request->company,
             'role' => $request->role,
+            'plan_id' => $trialPlan->id,
             'plan_type' => 'trial',
-            'trial_ends_at' => now()->addDays(14),
-            'document_limit' => 50,
+            'trial_ends_at' => now()->addDays($trialPlan->trial_days),
+            'document_limit' => $trialPlan->document_limit,
         ]);
 
         // Dispara criação de usuário Nextcloud em background
